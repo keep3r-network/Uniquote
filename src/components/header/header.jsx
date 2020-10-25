@@ -147,15 +147,6 @@ class Header extends Component {
     return (
       <div className={ classes.root }>
         <div className={ classes.headerV2 }>
-          <div className={ classes.icon }>
-            <img
-              alt=""
-              src={ require('../../assets/YFI-logo.png') }
-              height={ '40px' }
-              onClick={ () => { this.nav('') } }
-            />
-            <Typography variant={ 'h1'} className={ classes.name } onClick={ () => { this.nav('') } }>Unioracle</Typography>
-          </div>
           <div className={ classes.links }>
           </div>
           <div className={ classes.account }>
