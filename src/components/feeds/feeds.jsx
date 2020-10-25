@@ -125,6 +125,9 @@ class Feeds extends Component {
         <div className={ classes.pricePoint }>
           { feed.token0 && feed.token1 && <Typography variant='h3'>$ { feed.priceToken0 ? feed.priceToken0 : '0.00' } </Typography> }
         </div>
+        <div className={ classes.pricePoint }>
+          { feed.lastUpdated && <Typography variant='h6'>Last updated: { moment(feed.lastUpdated*1000).fromNow() }</Typography> }
+        </div>
       </div>
     )
   }

@@ -154,6 +154,9 @@ class Store {
         let consult = await this._getConsult(pairPopulated)
         pairPopulated.consult = consult
 
+        let lastUpdated = await this._getLastUpdated(pairPopulated)
+        pairPopulated.lastUpdated = lastUpdated
+
         const usdPrice0 = usdPrices[pairPopulated.token0.price_id]
         const usdPrice1 = usdPrices[pairPopulated.token1.price_id]
 
@@ -266,11 +269,25 @@ class Store {
     }
   }
 
+  _getLastUpdated = async (pair) => {
+    try {
+      const uniOracleContract = new web3.eth.Contract(UniswapV2OracleABI, config.unioracleAddress)
+
+      const lastUpdated = await uniOracleContract.methods.lastUpdated(pair.address).call({ })
+
+      return lastUpdated
+    } catch(e) {
+      return 0
+    }
+  }
+
   _getUSDPrices = async () => {
     try {
-      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=dai,usd-coin,true-usd,tether,usd-coin,yearn-finance,wrapped-bitcoin,ethereum,aave&vs_currencies=usd'
+      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=dai,usd-coin,true-usd,tether,usd-coin,yearn-finance,wrapped-bitcoin,ethereum,aave,uniswap,compound-governance-token,maker&vs_currencies=usd'
       const priceString = await rp(url);
       const priceJSON = JSON.parse(priceString)
+
+      console.log(priceJSON)
 
       return priceJSON
     } catch(e) {

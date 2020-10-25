@@ -21,6 +21,7 @@ export const colors = {
   black: '#000',
   blue: "#2F80ED",
   lightGray: "rgb(244, 245, 246);",
+  darkGray: "rgba(43,57,84,.5)",
   green: '#1abc9c',
   red: '#ed4337',
   orange: 'orange',
@@ -74,6 +75,14 @@ const iswapTheme =  {
       WebkitFontSmoothing: "antialiased",
       MozOsxFontSmoothing: "grayscale",
       lineHeight: 1.2,
+    },
+    h6: {
+      fontSize: '12px',
+      fontWeight: '600',
+      WebkitFontSmoothing: "antialiased",
+      MozOsxFontSmoothing: "grayscale",
+      lineHeight: 1.2,
+      color: colors.darkGray
     },
   },
   type: 'light',
