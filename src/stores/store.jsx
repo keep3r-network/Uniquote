@@ -254,8 +254,8 @@ class Store {
 
       const uniOracleContract = new web3.eth.Contract(UniswapV2OracleABI, config.unioracleAddress)
 
-      let sendAmount0 = (10*10**pair.token0.decimals).toFixed(0)
-      let sendAmount1 = (10*10**pair.token1.decimals).toFixed(0)
+      let sendAmount0 = (10**pair.token0.decimals).toFixed(0)
+      let sendAmount1 = (10**pair.token1.decimals).toFixed(0)
 
       const consult0To1 = await uniOracleContract.methods.consult(pair.token0.address, sendAmount0, pair.token1.address).call({ })
       const consult1To0 = await uniOracleContract.methods.consult(pair.token1.address, sendAmount1, pair.token0.address).call({ })
