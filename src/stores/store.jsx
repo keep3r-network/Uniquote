@@ -153,9 +153,11 @@ class Store {
 
         let consult = await this._getConsult(pairPopulated)
         pairPopulated.consult = consult
+        console.log(consult)
 
         let lastUpdated = await this._getLastUpdated(pairPopulated)
         pairPopulated.lastUpdated = lastUpdated
+        console.log(lastUpdated)
 
         const usdPrice0 = usdPrices[pairPopulated.token0.price_id]
         const usdPrice1 = usdPrices[pairPopulated.token1.price_id]
@@ -167,9 +169,11 @@ class Store {
           pairPopulated.priceToken1 = usdPrice1.usd
         }
 
-
-        return pairPopulated
-
+        if (callback) {
+          callback(null, pairPopulated)
+        } else {
+          return pairPopulated
+        }
       }, (err, pairsData) => {
         if(err) {
           console.log(err)
