@@ -86,6 +86,30 @@ class Store {
           decimals: "18",
           symbol: "MKR",
           price_id: 'maker',
+        },
+        {
+          address: "0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44",
+          decimals: "18",
+          symbol: "KP3R",
+          price_id: 'keep3rv1',
+        },
+        {
+          address: "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f",
+          decimals: "18",
+          symbol: "SNX",
+          price_id: 'havven',
+        },
+        {
+          address: "0x514910771af9ca656af840dff83e8264ecf986ca",
+          decimals: "18",
+          symbol: "LINK",
+          price_id: 'link',
+        },
+        {
+          address: "0xd533a949740bb3306d119cc777fa900ba034cd52",
+          decimals: "18",
+          symbol: "CRV",
+          price_id: 'curve-dao-token',
         }
       ],
       priceFeeds: [
@@ -232,10 +256,17 @@ class Store {
           decimals: await token1Contract.methods.decimals().call({})
         }
       }
-
-      return {
-        token0,
-        token1
+      if (token0.symbol == "WETH") {
+      console.log(token0);
+        return {
+          token0: token1,
+          token1: token0
+        }
+      } else {
+        return {
+          token0,
+          token1
+        }
       }
     } catch(ex) {
       console.log(ex)
@@ -264,6 +295,8 @@ class Store {
         consult0To1: consult0To1/10**pair.token1.decimals,
         consult1To0: consult1To0/10**pair.token0.decimals,
       }
+
+
     } catch(e) {
       return {
         consult0To1: null,
@@ -287,7 +320,7 @@ class Store {
 
   _getUSDPrices = async () => {
     try {
-      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=dai,usd-coin,true-usd,tether,usd-coin,yearn-finance,wrapped-bitcoin,ethereum,aave,uniswap,compound-governance-token,maker&vs_currencies=usd'
+      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=dai,usd-coin,true-usd,tether,yearn-finance,wrapped-bitcoin,ethereum,aave,uniswap,compound-governance-token,maker,havven,curve-dao-token,keep3rV1,link&vs_currencies=usd'
       const priceString = await rp(url);
       const priceJSON = JSON.parse(priceString)
 
