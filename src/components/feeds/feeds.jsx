@@ -30,8 +30,8 @@ const styles = theme => ({
   feedContainer: {
     background: colors.lightGray,
     width: '200px',
-    height: '220px',
-    padding: '12px',
+    padding: '24px 8px',
+    minHeight: '280px',
     margin: '12px',
     display: 'flex',
     flexDirection: 'column',
@@ -49,8 +49,26 @@ const styles = theme => ({
     justifyContent: 'center',
     margin: '6px 0px'
   },
+  updated: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: '24px',
+    marginBottom: '6px'
+  },
   pair: {
-    marginBottom: '24px'
+    marginBottom: '6px'
+  },
+  volatilityHead: {
+    marginTop: '24px',
+    marginBottom: '6px'
+  },
+  volatility: {
+    margin: '6px 0px'
+  },
+  gray: {
+    color: colors.darkGray
   }
 })
 
@@ -115,19 +133,52 @@ class Feeds extends Component {
 
     return (
       <div className={ classes.feedContainer }>
-        { (!feed.token0 || !feed.token1) && <CircularProgress /> }
-        <div className={ classes.pair }>
-          { feed.token0 && feed.token1 && <Typography variant='h2'>{ feed.token0.symbol } / { feed.token1.symbol }</Typography> }
-        </div>
-        <div className={ classes.pricePoint }>
-          { feed.token0 && feed.token1 && <Typography variant='h3'>{ feed.consult && feed.consult.consult0To1 ? feed.consult.consult0To1.toFixed(4) : '0.00' } ETH</Typography> }
-        </div>
-        <div className={ classes.pricePoint }>
-          { feed.token0 && feed.token1 && <Typography variant='h3'>$ { feed.priceToken0 ? feed.priceToken0 : '0.00' } </Typography> }
-        </div>
-        <div className={ classes.pricePoint }>
-          { feed.lastUpdated && <Typography variant='h6'>Last updated: { moment(feed.lastUpdated*1000).fromNow() }</Typography> }
-        </div>
+        { (!feed.token0 || !feed.token1) && <CircularProgress className={ classes.absoluteCenter } /> }
+        { feed.token0 && feed.token1 &&
+          <div className={ classes.pair }>
+            <Typography variant='h2'>{ feed.token0.symbol } / { feed.token1.symbol }</Typography>
+          </div>
+        }
+        { feed.token0 && feed.token1 &&
+          <div className={ classes.pricePoint }>
+            <Typography variant='h3'>{ feed.consult && feed.consult.consult0To1 ? feed.consult.consult0To1.toFixed(4) : '0.00' } ETH</Typography>
+          </div>
+        }
+        { feed.token0 && feed.token1 &&
+          <div className={ classes.pricePoint }>
+            <Typography variant='h3'>$ { feed.priceToken0 ? feed.priceToken0 : '0.00' } </Typography>
+          </div>
+        }
+        { feed.volatility &&
+          <div className={ classes.volatilityHead }>
+            <Typography variant='h2'>Volatility</Typography>
+          </div>
+        }
+        { feed.volatility && feed.volatility.realizedVolatility && (!feed.volatility.realizedVolatilityHourly && !feed.volatility.realizedVolatilityDaily && !feed.volatility.realizedVolatilityWeekly) &&
+          <div className={ classes.volatility }>
+            <Typography variant='h3'>{ feed.volatility.realizedVolatility.toFixed(2) }%</Typography>
+          </div>
+        }
+        { feed.volatility && feed.volatility.realizedVolatilityHourly &&
+          <div className={ classes.volatility }>
+            <Typography variant='h3'>Hourly: { feed.volatility.realizedVolatilityHourly.toFixed(2) }%</Typography>
+          </div>
+        }
+        { feed.volatility && feed.volatility.realizedVolatilityDaily &&
+          <div className={ classes.volatility }>
+            <Typography variant='h3'>Daily: { feed.volatility.realizedVolatilityDaily.toFixed(2) }%</Typography>
+          </div>
+        }
+        { feed.volatility && feed.volatility.realizedVolatilityWeekly &&
+          <div className={ classes.volatility }>
+            <Typography variant='h3'>Weekly: { feed.volatility.realizedVolatilityWeekly.toFixed(2) }%</Typography>
+          </div>
+        }
+        { feed.lastUpdated &&
+          <div className={ classes.updated }>
+            <Typography variant='h6'>Last updated: { moment(feed.lastUpdated*1000).fromNow() }</Typography>
+          </div>
+        }
       </div>
     )
   }
