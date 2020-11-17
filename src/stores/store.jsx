@@ -350,7 +350,7 @@ class Store {
     const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, config.keep3rVolatilityAddress)
 
     try {
-      const realizedVolatilityHourly = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 48, 2).call({ })
+      const realizedVolatilityHourly = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 4, 24).call({ })
       const realizedVolatilityDaily = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 4, 48).call({ })
       const realizedVolatilityWeekly = realizedVolatilityDaily
 
@@ -387,7 +387,7 @@ class Store {
     const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, config.keep3rVolatilityAddress)
 
     try {
-      const quote = await keep3rVolatilityContract.methods.quote(pair.token0.address, pair.token1.address, 86400*7).call({ })
+      const quote = await keep3rVolatilityContract.methods.quote(pair.token0.address, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 7).call({ })
       return {
         call: quote.call/1e18,
         put: quote.put/1e18
