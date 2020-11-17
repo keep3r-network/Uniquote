@@ -11,6 +11,7 @@ import { ERC20ABI } from "./abi/erc20ABI";
 import { UniswapV2OracleABI } from './abi/uniswapV2OracleABI';
 import { UniswapV2PairABI } from './abi/uniswapV2PairABI';
 import { Keep3rV1OracleABI } from './abi/keep3rV1OracleABI'
+import { Keep3rV1VolatilityABI } from './abi/keep3rV1VolatilityABI'
 
 import Web3 from 'web3';
 const web3 = new Web3(config.provider)
@@ -312,26 +313,25 @@ class Store {
   }
 
   _getVolatility = async (pair) => {
-    const keep3rOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, config.keep3rOracleAddress)
-    const sendAmount = (10**pair.token0.decimals).toFixed(0)
+    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, config.keep3rVolatilityAddress)
 
     try {
-      const realizedVolatilityHourly = await keep3rOracleContract.methods.realizedVolatilityHourly(pair.token0.address, sendAmount, pair.token1.address).call({ })
-      const realizedVolatilityDaily = await keep3rOracleContract.methods.realizedVolatilityDaily(pair.token0.address, sendAmount, pair.token1.address).call({ })
-      const realizedVolatilityWeekly = await keep3rOracleContract.methods.realizedVolatilityWeekly(pair.token0.address, sendAmount, pair.token1.address).call({ })
+      const realizedVolatilityHourly = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 48, 2).call({ })
+      const realizedVolatilityDaily = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 4, 48).call({ })
+      const realizedVolatilityWeekly = realizedVolatilityDaily
 
       return {
-        realizedVolatilityHourly: realizedVolatilityHourly/1e18,
-        realizedVolatilityDaily: realizedVolatilityDaily/1e18,
-        realizedVolatilityWeekly: realizedVolatilityWeekly/1e18 }
+        realizedVolatilityHourly: realizedVolatilityHourly/1e18*100,
+        realizedVolatilityDaily: realizedVolatilityDaily/1e18*100,
+        realizedVolatilityWeekly: realizedVolatilityWeekly/1e18*100 }
     } catch(e) {
       console.log(e)
 
       try {
-        const realizedVolatility = await keep3rOracleContract.methods.realizedVolatility(pair.token0.address, sendAmount, pair.token1.address, 24, 2).call({ })
+        const realizedVolatility = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 12, 2).call({ })
 
         return {
-          realizedVolatility: realizedVolatility/1e18,
+          realizedVolatility: realizedVolatility/1e18*100,
           realizedVolatilityHourly: null,
           realizedVolatilityDaily: null,
           realizedVolatilityWeekly: null,

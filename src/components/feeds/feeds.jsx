@@ -169,11 +169,6 @@ class Feeds extends Component {
             <Typography variant='h3'>Daily: { feed.volatility.realizedVolatilityDaily.toFixed(2) }%</Typography>
           </div>
         }
-        { feed.volatility && feed.volatility.realizedVolatilityWeekly &&
-          <div className={ classes.volatility }>
-            <Typography variant='h3'>Weekly: { feed.volatility.realizedVolatilityWeekly.toFixed(2) }%</Typography>
-          </div>
-        }
         { feed.lastUpdated &&
           <div className={ classes.updated }>
             <Typography variant='h6'>Last updated: { moment(feed.lastUpdated*1000).fromNow() }</Typography>
