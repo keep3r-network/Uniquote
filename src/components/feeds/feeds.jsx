@@ -10,7 +10,6 @@ import Store from "../../stores";
 import { colors } from '../../theme'
 
 import {
-  ERROR,
   GET_FEEDS,
   FEEDS_RETURNED,
   FEEDS_UPDATED,
@@ -22,9 +21,9 @@ const styles = theme => ({
     display: 'flex',
     maxWidth: '900px',
     width: '100%',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     flexWrap: 'wrap',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: '40px'
   },
   feedContainer: {
@@ -132,7 +131,7 @@ class Feeds extends Component {
     const { classes } = this.props;
 
     return (
-      <div className={ classes.feedContainer }>
+      <div className={ classes.feedContainer } key={ feed.token0 ? feed.token0.address : feed }>
         { (!feed.token0 || !feed.token1) && <CircularProgress className={ classes.absoluteCenter } /> }
         { feed.token0 && feed.token1 &&
           <div className={ classes.pair }>
@@ -167,6 +166,28 @@ class Feeds extends Component {
         { feed.volatility && feed.volatility.realizedVolatilityDaily &&
           <div className={ classes.volatility }>
             <Typography variant='h3'>Daily: { feed.volatility.realizedVolatilityDaily.toFixed(2) }%</Typography>
+          </div>
+        }
+        { feed.volatility && !feed.volatility.realizedVolatility && !feed.volatility.realizedVolatilityHourly && !feed.volatility.realizedVolatilityDaily && !feed.volatility.realizedVolatilityWeekly &&
+          <div className={ classes.volatility }>
+            <Typography variant='h3'>Unknown</Typography>
+          </div>
+        }
+        { feed.quote &&
+          <div className={ classes.volatilityHead }>
+            <Typography variant='h2'>Options</Typography>
+          </div>
+        }
+        { feed.quote &&
+          <div className={ classes.volatility }>
+            { feed.quote.call && <Typography variant='h3'>Call: $ { feed.quote.call.toFixed(2) } </Typography> }
+            { !feed.quote.call && <Typography variant='h3'>Call: Unknown</Typography> }
+          </div>
+        }
+        { feed.quote &&
+          <div className={ classes.volatility }>
+            { feed.quote.put && <Typography variant='h3'>Put: $ { feed.quote.put.toFixed(2) } </Typography> }
+            { !feed.quote.put && <Typography variant='h3'>Put: Unknown</Typography> }
           </div>
         }
         { feed.lastUpdated &&

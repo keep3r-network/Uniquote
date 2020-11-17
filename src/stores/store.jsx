@@ -8,7 +8,6 @@ import {
 } from '../constants';
 
 import { ERC20ABI } from "./abi/erc20ABI";
-import { UniswapV2OracleABI } from './abi/uniswapV2OracleABI';
 import { UniswapV2PairABI } from './abi/uniswapV2PairABI';
 import { Keep3rV1OracleABI } from './abi/keep3rV1OracleABI'
 import { Keep3rV1VolatilityABI } from './abi/keep3rV1VolatilityABI'
@@ -112,6 +111,36 @@ class Store {
           decimals: "18",
           symbol: "CRV",
           price_id: 'curve-dao-token',
+        },
+        {
+          address: "0x04fa0d235c4abf4bcf4787af4cf447de572ef828",
+          decimals: "18",
+          symbol: "UMA",
+          price_id: 'uma',
+        },
+        {
+          address: "0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
+          decimals: "8",
+          symbol: "renBTC",
+          price_id: 'renbtc',
+        },
+        {
+          address: "0x584bc13c7d411c00c01a62e8019472de68768430",
+          decimals: "18",
+          symbol: "Hegic",
+          price_id: 'hegic',
+        },
+        {
+          address: "0xc76fb75950536d98fa62ea968e1d6b45ffea2a55",
+          decimals: "18",
+          symbol: "Col",
+          price_id: 'unit-protocol',
+        },
+        {
+          address: "0x0ae055097c6d159879521c384f1d2123d1f195e6",
+          decimals: "18",
+          symbol: "STAKE",
+          price_id: 'xdai-stake',
         }
       ],
       priceFeeds: [
@@ -124,6 +153,8 @@ class Store {
         switch (payload.type) {
           case GET_FEEDS:
             this.getFeeds(payload);
+            break;
+          default:
             break;
         }
       }.bind(this)
@@ -178,6 +209,9 @@ class Store {
 
         let volatility = await this._getVolatility(pairPopulated)
         pairPopulated.volatility = volatility
+
+        let quote = await this._getQuotes(pairPopulated)
+        pairPopulated.quote = quote
 
         const usdPrice0 = usdPrices[pairPopulated.token0.price_id]
         const usdPrice1 = usdPrices[pairPopulated.token1.price_id]
@@ -251,7 +285,7 @@ class Store {
           decimals: await token1Contract.methods.decimals().call({})
         }
       }
-      if (token0.symbol == "WETH") {
+      if (token0.symbol === "WETH") {
         return {
           token0: token1,
           token1: token0
@@ -349,9 +383,26 @@ class Store {
     }
   }
 
+  _getQuotes = async (pair) => {
+    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, config.keep3rVolatilityAddress)
+
+    try {
+      const quote = await keep3rVolatilityContract.methods.quote(pair.token0.address, pair.token1.address, 86400*7).call({ })
+      return {
+        call: quote.call/1e18,
+        put: quote.put/1e18
+      }
+    } catch(e) {
+      return {
+        call: null,
+        put: null
+      }
+    }
+  }
+
   _getUSDPrices = async () => {
     try {
-      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=dai,usd-coin,true-usd,tether,yearn-finance,wrapped-bitcoin,ethereum,aave,uniswap,compound-governance-token,maker,havven,curve-dao-token,keep3rV1,link&vs_currencies=usd'
+      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=dai,usd-coin,true-usd,tether,yearn-finance,wrapped-bitcoin,ethereum,aave,uniswap,compound-governance-token,maker,havven,curve-dao-token,keep3rV1,link,renbtc,uma,hegic,unit-protocol,xdai-stake&vs_currencies=usd'
       const priceString = await rp(url);
       const priceJSON = JSON.parse(priceString)
 
