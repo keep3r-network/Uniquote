@@ -27,6 +27,7 @@ const styles = theme => ({
     marginTop: '40px'
   },
   feedContainer: {
+    position: 'relative',
     background: colors.lightGray,
     width: '200px',
     padding: '24px 8px',
@@ -46,7 +47,8 @@ const styles = theme => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: '6px 0px'
+    margin: '6px 0px',
+    zIndex: 1
   },
   updated: {
     width: '100%',
@@ -54,20 +56,37 @@ const styles = theme => ({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: '24px',
-    marginBottom: '6px'
+    marginBottom: '6px',
+    zIndex: 1
   },
   pair: {
-    marginBottom: '6px'
+    marginBottom: '6px',
+    zIndex: 1
   },
   volatilityHead: {
     marginTop: '24px',
-    marginBottom: '6px'
+    marginBottom: '6px',
+    zIndex: 1
   },
   volatility: {
-    margin: '6px 0px'
+    margin: '6px 0px',
+    zIndex: 1
   },
   gray: {
-    color: colors.darkGray
+    color: colors.darkGray,
+    zIndex: 1
+  },
+  feedBackground: {
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    filter: 'grayscale(100%)',
+    opacity: 0.05
   }
 })
 
@@ -80,13 +99,17 @@ class Feeds extends Component {
   constructor(props) {
     super()
 
-    const feeds = store.getStore('feeds')
+    const uniFeeds = store.getStore('uniFeeds')
+    const sushiFeeds = store.getStore('sushiFeeds')
 
     this.state = {
-      feeds: feeds
+      sushiFeeds: uniFeeds,
+      sushiFeeds: sushiFeeds,
+      feeds: [ ...uniFeeds, ...sushiFeeds]
     }
 
-    dispatcher.dispatch({ type: GET_FEEDS, content: { } })
+    dispatcher.dispatch({ type: GET_FEEDS, content: { version: 'Uniswap' } })
+    dispatcher.dispatch({ type: GET_FEEDS, content: { version: 'Sushiswap' } })
   };
 
   componentWillMount() {
@@ -100,7 +123,14 @@ class Feeds extends Component {
   };
 
   feedsReturned = () => {
-    this.setState({ feeds: store.getStore('feeds') })
+    const uniFeeds = store.getStore('uniFeeds')
+    const sushiFeeds = store.getStore('sushiFeeds')
+
+    this.setState({
+      sushiFeeds: uniFeeds,
+      sushiFeeds: sushiFeeds,
+      feeds: [ ...uniFeeds, ...sushiFeeds]
+    })
   }
 
   render() {
@@ -131,7 +161,12 @@ class Feeds extends Component {
     const { classes } = this.props;
 
     return (
-      <div className={ classes.feedContainer } key={ feed.token0 ? feed.token0.address : feed }>
+      <div className={ classes.feedContainer } key={ feed.token0 ? feed.type+'_'+feed.token0.address : feed }>
+        { feed.type &&
+          <div>
+            <Typography variant='h6'>{ feed.type }</Typography>
+          </div>
+        }
         { (!feed.token0 || !feed.token1) && <CircularProgress className={ classes.absoluteCenter } /> }
         { feed.token0 && feed.token1 &&
           <div className={ classes.pair }>

@@ -27,6 +27,12 @@ class Store {
   constructor() {
 
     this.store = {
+      uniFeeds: [
+
+      ],
+      sushiFeeds: [
+
+      ],
       assets: [
         {
           address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
@@ -143,9 +149,6 @@ class Store {
           price_id: 'xdai-stake',
         }
       ],
-      priceFeeds: [
-
-      ]
     }
 
     dispatcher.register(
@@ -182,16 +185,30 @@ class Store {
   // get coingecko USD/ETH pricing
 
 
-  getFeeds = async () => {
+  getFeeds = async (payload) => {
     try {
-      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, config.keep3rOracleAddress)
+
+      const { version } = payload.content
+
+      let contractAddress = config.keep3rOracleAddress
+      let volatilityContractAddress = config.keep3rVolatilityAddress
+      if(version === 'Sushiswap') {
+        volatilityContractAddress = config.sushiVolatilityAddress
+        contractAddress = config.sushiOracleAddress
+      }
+
+      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
       const pairs = await uniOracleContract.methods.pairs().call({})
 
       if(!pairs || pairs.length === 0) {
         return emitter.emit(FEEDS_RETURNED)
       }
 
-      store.setStore({ feeds: pairs })
+      if(version === 'Sushiswap') {
+        store.setStore({ sushiFeeds: pairs })
+      } else {
+        store.setStore({ uniFeeds: pairs })
+      }
       emitter.emit(FEEDS_UPDATED)
 
       const usdPrices = await this._getUSDPrices()
@@ -200,17 +217,18 @@ class Store {
 
         let pairPopulated = await this._populatePairsTokens(pair)
         pairPopulated.address = pair
+        pairPopulated.type = version
 
-        let consult = await this._getConsult(pairPopulated)
+        let consult = await this._getConsult(pairPopulated, contractAddress)
         pairPopulated.consult = consult
 
-        let lastUpdated = await this._getLastUpdated(pairPopulated)
+        let lastUpdated = await this._getLastUpdated(pairPopulated, contractAddress)
         pairPopulated.lastUpdated = lastUpdated.timestamp
 
-        let volatility = await this._getVolatility(pairPopulated)
+        let volatility = await this._getVolatility(pairPopulated, volatilityContractAddress)
         pairPopulated.volatility = volatility
 
-        let quote = await this._getQuotes(pairPopulated)
+        let quote = await this._getQuotes(pairPopulated, volatilityContractAddress)
         pairPopulated.quote = quote
 
         const usdPrice0 = usdPrices[pairPopulated.token0.price_id]
@@ -232,7 +250,13 @@ class Store {
         if(err) {
           console.log(err)
         }
-        store.setStore({ feeds: pairsData })
+
+
+        if(version === 'Sushiswap') {
+          store.setStore({ sushiFeeds: pairsData })
+        } else {
+          store.setStore({ uniFeeds: pairsData })
+        }
         emitter.emit(FEEDS_RETURNED)
       })
 
@@ -308,10 +332,10 @@ class Store {
 
   }
 
-  _getConsult = async (pair) => {
+  _getConsult = async (pair, contractAddress) => {
     try {
 
-      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, config.keep3rOracleAddress)
+      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
 
       let sendAmount0 = (10**pair.token0.decimals).toFixed(0)
       let sendAmount1 = (10**pair.token1.decimals).toFixed(0)
@@ -334,9 +358,9 @@ class Store {
     }
   }
 
-  _getLastUpdated = async (pair) => {
+  _getLastUpdated = async (pair, contractAddress) => {
     try {
-      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, config.keep3rOracleAddress)
+      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
 
       const lastUpdated = await uniOracleContract.methods.lastObservation(pair.address).call({ })
 
@@ -346,8 +370,8 @@ class Store {
     }
   }
 
-  _getVolatility = async (pair) => {
-    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, config.keep3rVolatilityAddress)
+  _getVolatility = async (pair, volatilityContractAddress) => {
+    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, volatilityContractAddress)
 
     try {
       const realizedVolatilityHourly = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 48, 2).call({ })
@@ -383,8 +407,8 @@ class Store {
     }
   }
 
-  _getQuotes = async (pair) => {
-    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, config.keep3rVolatilityAddress)
+  _getQuotes = async (pair, volatilityContractAddress) => {
+    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, volatilityContractAddress)
 
     try {
       const quote = await keep3rVolatilityContract.methods.quote(pair.token0.address, pair.token1.address, 86400*7).call({ })
