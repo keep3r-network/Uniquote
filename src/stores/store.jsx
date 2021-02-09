@@ -205,11 +205,16 @@ class Store {
       }
 
       if(version === 'Sushiswap') {
-        store.setStore({ sushiFeeds: pairs })
+        if(store.getStore('sushiFeeds').length === 0) {
+          store.setStore({ sushiFeeds: pairs })
+          emitter.emit(FEEDS_UPDATED)
+        }
       } else {
-        store.setStore({ uniFeeds: pairs })
+        if(store.getStore('uniFeeds').length === 0) {
+          store.setStore({ uniFeeds: pairs })
+          emitter.emit(FEEDS_UPDATED)
+        }
       }
-      emitter.emit(FEEDS_UPDATED)
 
       const usdPrices = await this._getUSDPrices()
 
