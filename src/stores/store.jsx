@@ -246,17 +246,29 @@ class Store {
         } else {
           return pairPopulated
         }
+
       }, (err, pairsData) => {
         if(err) {
           console.log(err)
         }
 
+        const storeAssets = this.getStore('assets')
+        const allTokens = pairsData.map((pair) => {
+          return pair.token0
+        })
+
+        const newAssets = [...storeAssets, ...allTokens]
+
+        const unique = [...new Set(newAssets)];
+
+        this.setStore({ assets: unique })
 
         if(version === 'Sushiswap') {
           store.setStore({ sushiFeeds: pairsData })
         } else {
           store.setStore({ uniFeeds: pairsData })
         }
+
         emitter.emit(FEEDS_RETURNED)
       })
 

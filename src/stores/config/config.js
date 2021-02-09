@@ -5,7 +5,7 @@ const config = {
   keep3rVolatilityAddress: '0xCCdfCB72753CfD55C5afF5d98eA5f9C43be9659d',
 
   sushiOracleAddress: '0xf67Ab1c914deE06Ba0F264031885Ea7B276a7cDa',
-  sushiVolatilityAddress: '0xCCdfCB72753CfD55C5afF5d98eA5f9C43be9659d',
+  sushiVolatilityAddress: '0x173ed6531818456f29Fc74011a3B1FB4B6132Dc9',
 
 };
 

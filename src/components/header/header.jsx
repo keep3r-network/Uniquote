@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import { withStyles } from '@material-ui/core/styles';
+import { withRouter } from "react-router-dom";
 import { colors } from '../../theme'
+import { Typography } from '@material-ui/core'
 
 const styles = theme => ({
   root: {
@@ -32,7 +34,9 @@ const styles = theme => ({
     cursor: 'pointer'
   },
   links: {
-    display: 'flex'
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center'
   },
   link: {
     padding: '12px 0px',
@@ -40,7 +44,7 @@ const styles = theme => ({
     cursor: 'pointer',
     '&:hover': {
       paddingBottom: '9px',
-      borderBottom: "3px solid "+colors.borderBlue,
+      borderBottom: "3px solid "+colors.blue,
     },
   },
   title: {
@@ -51,16 +55,7 @@ const styles = theme => ({
     margin: '0px 12px',
     cursor: 'pointer',
     paddingBottom: '9px',
-    borderBottom: "3px solid "+colors.borderBlue,
-  },
-  account: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flex: 1,
-    [theme.breakpoints.down('sm')]: {
-      flex: 1
-    }
+    borderBottom: "3px solid "+colors.blue,
   },
   walletAddress: {
     padding: '12px',
@@ -145,6 +140,10 @@ class Header extends Component {
       <div className={ classes.root }>
         <div className={ classes.headerV2 }>
           <div className={ classes.links }>
+            { this.renderLink('feeds') }
+            { this.renderLink('contracts') }
+            { this.renderLink('docs') }
+            { this.renderLink('github') }
           </div>
           <div className={ classes.account }>
           </div>
@@ -152,6 +151,30 @@ class Header extends Component {
       </div>
     )
   }
+
+  renderLink = (screen) => {
+    const {
+      classes
+    } = this.props;
+
+    return (
+      <div className={ (window.location.pathname.includes(screen) || (screen ==='feeds' && window.location.pathname==='/')  )?classes.linkActive:classes.link } onClick={ () => { this.nav(screen) } }>
+        <Typography variant={'h3'} className={ `title` }>{ screen }</Typography>
+      </div>
+    )
+  }
+
+  nav = (screen) => {
+    if(screen === 'docs') {
+      window.open("https://docs.uniquote.finance/", "_blank")
+      return
+    }
+    if(screen === 'github') {
+      window.open("https://github.com/keep3r-network", "_blank")
+      return
+    }
+    this.props.history.push('/'+screen)
+  }
 }
 
-export default withStyles(styles)(Header);
+export default withRouter(withStyles(styles)(Header));

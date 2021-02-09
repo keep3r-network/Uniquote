@@ -5,6 +5,9 @@ import {
   Typography,
   CircularProgress
 } from '@material-ui/core';
+import Skeleton from '@material-ui/lab/Skeleton';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 
 import Store from "../../stores";
 import { colors } from '../../theme'
@@ -19,7 +22,7 @@ const styles = theme => ({
   root: {
     flex: 1,
     display: 'flex',
-    maxWidth: '900px',
+    maxWidth: '1100px',
     width: '100%',
     justifyContent: 'flex-start',
     flexWrap: 'wrap',
@@ -29,7 +32,7 @@ const styles = theme => ({
   feedContainer: {
     position: 'relative',
     background: colors.lightGray,
-    width: '200px',
+    width: '240px',
     padding: '24px 8px',
     minHeight: '280px',
     margin: '12px',
@@ -38,6 +41,7 @@ const styles = theme => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: '10px',
+    cursor: 'pointer',
     '&:hover': {
       background: 'rgba(0,0,0,0.1)'
     }
@@ -61,7 +65,9 @@ const styles = theme => ({
   },
   pair: {
     marginBottom: '6px',
-    zIndex: 1
+    zIndex: 1,
+    display: 'flex',
+    alignItems: 'center',
   },
   volatilityHead: {
     marginTop: '24px',
@@ -87,6 +93,30 @@ const styles = theme => ({
     height: '100%',
     filter: 'grayscale(100%)',
     opacity: 0.05
+  },
+  toggleButton: {
+
+  },
+  filters: {
+    minWidth: '100%',
+    padding: '12px'
+  },
+  productIcon: {
+    marginRight: '12px'
+  },
+  skeletonFrame: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+  skeleton: {
+    width: '100px',
+    marginBottom: '12px'
+  },
+  skeletonTitle: {
+    width: '150px',
+    marginBottom: '6px',
+    marginTop: '12px'
   }
 })
 
@@ -103,9 +133,11 @@ class Feeds extends Component {
     const sushiFeeds = store.getStore('sushiFeeds')
 
     this.state = {
-      sushiFeeds: uniFeeds,
+      uniFeeds: uniFeeds,
       sushiFeeds: sushiFeeds,
-      feeds: [ ...uniFeeds, ...sushiFeeds]
+      feeds: [ ...uniFeeds, ...sushiFeeds],
+      feedFilter: null,
+
     }
 
     dispatcher.dispatch({ type: GET_FEEDS, content: { version: 'Uniswap' } })
@@ -127,10 +159,23 @@ class Feeds extends Component {
     const sushiFeeds = store.getStore('sushiFeeds')
 
     this.setState({
-      sushiFeeds: uniFeeds,
+      uniFeeds: uniFeeds,
       sushiFeeds: sushiFeeds,
       feeds: [ ...uniFeeds, ...sushiFeeds]
     })
+  }
+
+  onFeedFilterChanged = (event, newVal) => {
+    this.setState({ feedFilter: newVal })
+  }
+
+  feedClicked = (feed) => {
+    if(feed.type === 'Uniswap') {
+      window.open('https://info.uniswap.org/pair/'+feed.address, '_blank')
+    } else {
+      window.open('https://www.sushiswap.fi/pair/'+feed.address, '_blank')
+    }
+
   }
 
   render() {
@@ -138,7 +183,33 @@ class Feeds extends Component {
 
     return (
       <div className={ classes.root }>
+        { this.renderFilters() }
         { this.renderFeeds() }
+      </div>
+    )
+  }
+
+  renderFilters = () => {
+    const { classes } = this.props;
+    const { feedFilter } = this.state;
+
+    return (
+      <div className={ classes.filters}>
+        <ToggleButtonGroup
+          value={ feedFilter }
+          exclusive
+          onChange={ this.onFeedFilterChanged }
+          className={ classes.feedFilters }
+          >
+          <ToggleButton value="Uniswap" >
+            <img src={require('../../assets/tokens/UNI-logo.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon }/>
+            <Typography variant='h3'>Uniswap</Typography>
+          </ToggleButton>
+          <ToggleButton value="Sushiswap">
+            <img src={require('../../assets/tokens/SUSHI-logo.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon } />
+            <Typography variant='h3'>Sushiswap</Typography>
+          </ToggleButton>
+        </ToggleButtonGroup>
       </div>
     )
   }
@@ -146,28 +217,51 @@ class Feeds extends Component {
   renderFeeds = () => {
     const {
       feeds,
+      feedFilter
     } = this.state
 
     if(!feeds) {
       return <div></div>
     }
 
-    return feeds.map((feed) => {
-      return this.renderFeed(feed)
+    console.log(feedFilter)
+
+    return feeds.filter((feed) => {
+      if(!feedFilter) {
+        return true
+      }
+
+      return feed.type === feedFilter
+    }).map((feed, index) => {
+      return this.renderFeed(feed, index)
     })
   }
 
-  renderFeed = (feed) => {
+  renderFeed = (feed, index) => {
     const { classes } = this.props;
 
     return (
-      <div className={ classes.feedContainer } key={ feed.token0 ? feed.type+'_'+feed.token0.address : feed }>
+      <div className={ classes.feedContainer } key={ index } onClick={ feed.address ? () => { this.feedClicked(feed) } : null }>
         { feed.type &&
-          <div>
+          <div className={ classes.pair }>
+            { feed.type === 'Uniswap' && <img src={require('../../assets/tokens/UNI-logo.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon }/> }
+            { feed.type === 'Sushiswap' && <img src={require('../../assets/tokens/SUSHI-logo.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon }/> }
             <Typography variant='h6'>{ feed.type }</Typography>
           </div>
         }
-        { (!feed.token0 || !feed.token1) && <CircularProgress className={ classes.absoluteCenter } /> }
+        { (!feed.token0 || !feed.token1) && <div className={ classes.skeletonFrame }>
+            <Skeleton className={ classes.skeletonTitle } height={ 30 } />
+            <Skeleton className={ classes.skeleton } />
+            <Skeleton className={ classes.skeleton } />
+            <Skeleton className={ classes.skeletonTitle } height={ 30 } />
+            <Skeleton className={ classes.skeleton } />
+            <Skeleton className={ classes.skeleton } />
+            <Skeleton className={ classes.skeletonTitle } height={ 30 } />
+            <Skeleton className={ classes.skeleton } />
+            <Skeleton className={ classes.skeleton } />
+            <Skeleton className={ classes.skeletonTitle } />
+          </div>
+        }
         { feed.token0 && feed.token1 &&
           <div className={ classes.pair }>
             <Typography variant='h2'>{ feed.token0.symbol } / { feed.token1.symbol }</Typography>
@@ -215,14 +309,14 @@ class Feeds extends Component {
         }
         { feed.quote &&
           <div className={ classes.volatility }>
-            { feed.quote.call && <Typography variant='h3'>Call: $ { feed.quote.call.toFixed(2) } </Typography> }
-            { !feed.quote.call && <Typography variant='h3'>Call: Unknown</Typography> }
+            { feed.quote.call != null && <Typography variant='h3'>Call: $ { feed.quote.call.toFixed(2) } </Typography> }
+            { feed.quote.call == null && <Typography variant='h3'>Call: Unknown</Typography> }
           </div>
         }
         { feed.quote &&
           <div className={ classes.volatility }>
-            { feed.quote.put && <Typography variant='h3'>Put: $ { feed.quote.put.toFixed(2) } </Typography> }
-            { !feed.quote.put && <Typography variant='h3'>Put: Unknown</Typography> }
+            { feed.quote.put != null && <Typography variant='h3'>Put: $ { feed.quote.put.toFixed(2) } </Typography> }
+            { feed.quote.put == null && <Typography variant='h3'>Put: Unknown</Typography> }
           </div>
         }
         { feed.lastUpdated &&
