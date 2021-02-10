@@ -22,7 +22,10 @@ const styles = theme => ({
     justifyContent: 'center',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
-    marginTop: '40px'
+    marginTop: '40px',
+    [theme.breakpoints.up('xs')]: {
+      marginLeft: 'auto',
+    },
   },
   contractsContainer: {
     display: 'flex',
@@ -30,12 +33,24 @@ const styles = theme => ({
     width: '800px',
     border: '1px solid '+colors.darkGray,
     borderRadius: '10px',
-    padding: '24px 40px'
+    padding: '24px 40px',
+    [theme.breakpoints.up('xs')]: {
+      flexDirection: 'column',
+      flexWrap: 'wrap',
+      padding: '0px',
+      width: 'auto',
+    },
   },
   contractContainer: {
     display: 'flex',
     minHeight: '40px',
     alignItems: 'center',
+    [theme.breakpoints.up('xs')]: {
+      flexDirection: 'column',
+      flexWrap: 'wrap',
+      padding: '2px',
+      width: 'auto',
+    },
   },
   contractName: {
     flex: 1,
@@ -45,6 +60,10 @@ const styles = theme => ({
     cursor: 'pointer',
     '&:hover': {
       borderBottom: "1px solid "+colors.blue,
+    },
+    [theme.breakpoints.up('xs')]: {
+      fontSize: '.9rem',
+      marginTop: '10px',
     },
   },
   title: {

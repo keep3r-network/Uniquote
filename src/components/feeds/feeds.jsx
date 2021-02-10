@@ -44,7 +44,10 @@ const styles = theme => ({
     cursor: 'pointer',
     '&:hover': {
       background: 'rgba(0,0,0,0.1)'
-    }
+    },
+    [theme.breakpoints.up('xs')]: {
+      margin: 'auto',
+    },
   },
   pricePoint: {
     width: '100%',
