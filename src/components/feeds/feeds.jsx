@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import * as moment from 'moment';
 import { withStyles } from '@material-ui/core/styles';
+import { withRouter } from "react-router-dom";
 import {
   Typography,
   CircularProgress
@@ -170,11 +171,12 @@ class Feeds extends Component {
   }
 
   feedClicked = (feed) => {
-    if(feed.type === 'Uniswap') {
+    this.props.history.push('/charts/'+feed.address)
+    /*if(feed.type === 'Uniswap') {
       window.open('https://info.uniswap.org/pair/'+feed.address, '_blank')
     } else {
       window.open('https://www.sushiswap.fi/pair/'+feed.address, '_blank')
-    }
+    }*/
 
   }
 
@@ -329,4 +331,4 @@ class Feeds extends Component {
   }
 }
 
-export default withStyles(styles)(Feeds);
+export default withRouter(withStyles(styles)(Feeds));

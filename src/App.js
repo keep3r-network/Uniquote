@@ -13,6 +13,7 @@ import { colors } from './theme';
 import Feeds from './components/feeds';
 import Contracts from './components/contracts';
 import Header from './components/header';
+import Charts from './components/charts';
 
 class App extends Component {
   state = {
@@ -32,6 +33,7 @@ class App extends Component {
           }}>
             <Header />
             <Switch>
+              <Route path="/charts/:pair" render={(props) => <Charts {...props} /> } />
               <Route path="/feeds">
                 <Feeds />
               </Route>

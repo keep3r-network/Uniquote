@@ -3,8 +3,11 @@ import async from 'async';
 import config from "./config";
 import {
   GET_FEEDS,
+  GET_PRICES,
   FEEDS_UPDATED,
+  PRICES_UPDATED,
   FEEDS_RETURNED,
+  PRICES_RETURNED
 } from '../constants';
 
 import { ERC20ABI } from "./abi/erc20ABI";
@@ -27,6 +30,9 @@ class Store {
   constructor() {
 
     this.store = {
+      graphData: {
+
+      },
       uniFeeds: [
 
       ],
@@ -157,6 +163,9 @@ class Store {
           case GET_FEEDS:
             this.getFeeds(payload);
             break;
+          case GET_PRICES:
+            this.getPrices(payload);
+            break;
           default:
             break;
         }
@@ -283,6 +292,17 @@ class Store {
     }
   }
 
+  _rVol = async (p) => {
+    var x = 0;
+    for (var i = 1; i <= (p.length-1); i++) {
+        x += ((Math.log10(parseInt(p[i])) - Math.log10(parseInt(p[i-1]))))**2;
+        //denom += FIXED_1**2;
+    }
+    //return (sum, denom);
+    x = Math.sqrt(252 * Math.sqrt(x / (p.length-1)));
+    return 1e18 * x /1e18*100;
+  }
+
   _populatePairsTokens = async (pair) => {
     try {
       const assets = store.getStore('assets')
@@ -347,6 +367,58 @@ class Store {
       }
     }
 
+  }
+
+  getPrices = async (_pair) => {
+    try {
+
+      console.log(_pair.content.pair)
+      let pair = await this._populatePairsTokens(_pair.content.pair)
+      console.log(pair)
+      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, config.keep3rOracleAddress)
+
+      let sendAmount0 = (10**pair.token0.decimals).toFixed(0)
+      let sendAmount1 = (10**pair.token1.decimals).toFixed(0)
+
+      const prices0To1 = await uniOracleContract.methods.prices(pair.token0.address, sendAmount0, pair.token1.address,366).call({ })
+      const prices1To0 = await uniOracleContract.methods.prices(pair.token1.address, sendAmount1, pair.token0.address,366).call({ })
+
+      const currentDate = new Date();
+      const now = currentDate.getTime();
+      const startTime = now - (336 * 30 * 60 * 1000)
+
+      var dataTimeSeries = [];
+      var data0To1 = [];
+      var data1To0 = [];
+      for (var x = 0; x < prices0To1.length; x++) {
+        data0To1.push(parseInt(prices0To1[x])/1e18);
+        data1To0.push(parseInt(prices1To0[x])/1e18);
+        dataTimeSeries.push(new Date(startTime + (x * 30 * 60 * 1000)));
+      }
+
+      var volTimeSeries = [];
+      const increment = 12;
+      var vol0To1 = [];
+      var vol1To0 = [];
+      for (var i = 0; i < prices0To1.length; i=i+increment) {
+        vol0To1.push(await this._rVol(prices0To1.slice(i, i+increment)));
+        vol1To0.push(await this._rVol(prices1To0.slice(i, i+increment)));
+        var date = startTime + (i * 30 * 60 * 1000 * increment);
+        volTimeSeries.push(new Date(date));
+      }
+
+      store.setStore({ graphData: {
+        data0To1: data0To1,
+        data1To0: data1To0,
+        dataTimeSeries: dataTimeSeries,
+        vol0To1: vol0To1,
+        vol1To0: vol1To0,
+        volTimeSeries: volTimeSeries
+      } })
+
+      emitter.emit(PRICES_RETURNED)
+
+    } catch(e) {}
   }
 
   _getConsult = async (pair, contractAddress) => {
