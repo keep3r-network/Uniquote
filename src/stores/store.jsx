@@ -346,7 +346,7 @@ class Store {
           decimals: await token1Contract.methods.decimals().call({})
         }
       }
-      if (token0.symbol === "WETH") {
+      if (token0.symbol === "WETH" || token0.symbol === "USDT" || token0.symbol === "USDC" || token0.symbol === "DAI") {
         return {
           token0: token1,
           token1: token0
