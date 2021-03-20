@@ -271,12 +271,12 @@ class Feeds extends Component {
         }
         { feed.token0 && feed.token1 &&
           <div className={ classes.pricePoint }>
-            <Typography variant='h3'>{ feed.consult && feed.consult.consult0To1 ? feed.consult.consult0To1.toFixed(4) : '0.00' } ETH</Typography>
+            <Typography variant='h3'>{ feed.consult && feed.consult.consult0To1 ? feed.consult.consult0To1.toFixed(4) : '0.00' } { feed.token1.symbol }</Typography>
           </div>
         }
         { feed.token0 && feed.token1 &&
           <div className={ classes.pricePoint }>
-            <Typography variant='h3'>$ { feed.priceToken0 ? feed.priceToken0 : '0.00' } </Typography>
+            <Typography variant='h3'>$ { feed.priceToken0 ? feed.priceToken0 : (feed.priceToken1 && feed.consult && feed.consult.consult0To1 ? (feed.consult.consult0To1 * feed.priceToken1).toFixed(2) : '0.00' ) } </Typography>
           </div>
         }
         { feed.volatility &&
