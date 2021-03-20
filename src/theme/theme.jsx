@@ -102,7 +102,7 @@ const iswapTheme =  {
     },
     text: {
       primary: colors.text,
-      secondary: colors.text
+      secondary: colors.blue
     }
   },
   breakpoints: breakpoints
