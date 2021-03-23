@@ -17,6 +17,7 @@ import { Keep3rV1VolatilityABI } from './abi/keep3rV1VolatilityABI'
 
 import Web3 from 'web3';
 const web3 = new Web3(config.provider)
+const ftm3 = new Web3(config.ftmProvider)
 
 const rp = require('request-promise');
 
@@ -39,12 +40,21 @@ class Store {
       sushiFeeds: [
 
       ],
+      ftmFeeds: [
+
+      ],
       assets: [
         {
           address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           decimals: "18",
           symbol: "WETH",
           price_id: 'ethereum',
+        },
+        {
+          address: "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
+          decimals: "18",
+          symbol: "WFTM",
+          price_id: 'fantom',
         },
         {
           address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
@@ -201,21 +211,31 @@ class Store {
 
       let contractAddress = config.keep3rOracleAddress
       let volatilityContractAddress = config.keep3rVolatilityAddress
-      if(version === 'Sushiswap') {
+      let _web3 = web3;
+      if (version === 'Sushiswap') {
         volatilityContractAddress = config.sushiVolatilityAddress
         contractAddress = config.sushiOracleAddress
+      } else if (version === "Fantom") {
+        volatilityContractAddress = config.ftmVolatilityAddress
+        contractAddress = config.ftmOracleAddress
+        _web3 = ftm3;
       }
 
-      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
+      const uniOracleContract = new _web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
       const pairs = await uniOracleContract.methods.pairs().call({})
 
       if(!pairs || pairs.length === 0) {
         return emitter.emit(FEEDS_RETURNED)
       }
 
-      if(version === 'Sushiswap') {
+      if (version === 'Sushiswap') {
         if(store.getStore('sushiFeeds').length === 0) {
           store.setStore({ sushiFeeds: pairs })
+          emitter.emit(FEEDS_UPDATED)
+        }
+      } else if (version === 'Fantom') {
+        if(store.getStore('ftmFeeds').length === 0) {
+          store.setStore({ ftmFeeds: pairs })
           emitter.emit(FEEDS_UPDATED)
         }
       } else {
@@ -229,20 +249,23 @@ class Store {
 
       async.map(pairs, async (pair, callback) => {
 
-        let pairPopulated = await this._populatePairsTokens(pair)
+        let pairPopulated = await this._populatePairsTokens(_web3, pair)
         pairPopulated.address = pair
         pairPopulated.type = version
 
-        let consult = await this._getConsult(pairPopulated, contractAddress)
+        let consult = await this._getConsult(_web3, pairPopulated, contractAddress)
         pairPopulated.consult = consult
 
-        let lastUpdated = await this._getLastUpdated(pairPopulated, contractAddress)
+        let lastUpdated = await this._getLastUpdated(_web3, pairPopulated, contractAddress)
         pairPopulated.lastUpdated = lastUpdated.timestamp
 
-        let volatility = await this._getVolatility(pairPopulated, volatilityContractAddress)
-        pairPopulated.volatility = volatility
+        let volatility = await this._getVolatility(_web3, pairPopulated, volatilityContractAddress)
+        console.log(volatility)
+        if (volatility.realizedVolatilityDaily < 500) {
+          pairPopulated.volatility = volatility
+        }
 
-        let quote = await this._getQuotes(pairPopulated, volatilityContractAddress)
+        let quote = await this._getQuotes(_web3, pairPopulated, volatilityContractAddress)
         pairPopulated.quote = quote
 
         const usdPrice0 = usdPrices[pairPopulated.token0.price_id]
@@ -277,8 +300,10 @@ class Store {
 
         this.setStore({ assets: unique })
 
-        if(version === 'Sushiswap') {
+        if (version === 'Sushiswap') {
           store.setStore({ sushiFeeds: pairsData })
+        } else if (version === 'Fantom') {
+          store.setStore({ ftmFeeds: pairsData })
         } else {
           store.setStore({ uniFeeds: pairsData })
         }
@@ -303,11 +328,11 @@ class Store {
     return 1e18 * x /1e18*100;
   }
 
-  _populatePairsTokens = async (pair) => {
+  _populatePairsTokens = async (_web3, pair) => {
     try {
       const assets = store.getStore('assets')
 
-      const uniswapV2PairContract = new web3.eth.Contract(UniswapV2PairABI, pair)
+      const uniswapV2PairContract = new _web3.eth.Contract(UniswapV2PairABI, pair)
       const token0Address = await uniswapV2PairContract.methods.token0().call({ })
       const token1Address = await uniswapV2PairContract.methods.token1().call({ })
 
@@ -321,7 +346,7 @@ class Store {
       if(token0Data.length > 0) {
         token0 = token0Data[0]
       } else {
-        const token0Contract = new web3.eth.Contract(ERC20ABI, token0Address)
+        const token0Contract = new _web3.eth.Contract(ERC20ABI, token0Address)
 
         token0 = {
           address: token0Address,
@@ -338,7 +363,7 @@ class Store {
       if(token1Data.length > 0) {
         token1 = token1Data[0]
       } else {
-        const token1Contract = new web3.eth.Contract(ERC20ABI, token1Address)
+        const token1Contract = new _web3.eth.Contract(ERC20ABI, token1Address)
 
         token1 = {
           address: token1Address,
@@ -346,7 +371,7 @@ class Store {
           decimals: await token1Contract.methods.decimals().call({})
         }
       }
-      if (token0.symbol === "WETH" || token0.symbol === "USDT" || token0.symbol === "USDC" || token0.symbol === "DAI") {
+      if (token0.symbol === "WFTM" || token0.symbol === "WETH" || token0.symbol === "USDT" || token0.symbol === "USDC" || token0.symbol === "DAI") {
         return {
           token0: token1,
           token1: token0
@@ -369,13 +394,11 @@ class Store {
 
   }
 
-  getPrices = async (_pair) => {
+  getPrices = async (_web3, _pair) => {
     try {
-
-      console.log(_pair.content.pair)
-      let pair = await this._populatePairsTokens(_pair.content.pair)
+      let pair = await this._populatePairsTokens(_web3, _pair.content.pair)
       console.log(pair)
-      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, config.keep3rOracleAddress)
+      const uniOracleContract = new _web3.eth.Contract(Keep3rV1OracleABI, config.keep3rOracleAddress)
 
       let sendAmount0 = (10**pair.token0.decimals).toFixed(0)
       let sendAmount1 = (10**pair.token1.decimals).toFixed(0)
@@ -421,10 +444,10 @@ class Store {
     } catch(e) {}
   }
 
-  _getConsult = async (pair, contractAddress) => {
+  _getConsult = async (_web3, pair, contractAddress) => {
     try {
 
-      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
+      const uniOracleContract = new _web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
 
       let sendAmount0 = (10**pair.token0.decimals).toFixed(0)
       let sendAmount1 = (10**pair.token1.decimals).toFixed(0)
@@ -447,9 +470,9 @@ class Store {
     }
   }
 
-  _getLastUpdated = async (pair, contractAddress) => {
+  _getLastUpdated = async (_web3, pair, contractAddress) => {
     try {
-      const uniOracleContract = new web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
+      const uniOracleContract = new _web3.eth.Contract(Keep3rV1OracleABI, contractAddress)
 
       const lastUpdated = await uniOracleContract.methods.lastObservation(pair.address).call({ })
 
@@ -459,8 +482,8 @@ class Store {
     }
   }
 
-  _getVolatility = async (pair, volatilityContractAddress) => {
-    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, volatilityContractAddress)
+  _getVolatility = async (_web3, pair, volatilityContractAddress) => {
+    const keep3rVolatilityContract = new _web3.eth.Contract(Keep3rV1VolatilityABI, volatilityContractAddress)
 
     try {
       const realizedVolatilityHourly = await keep3rVolatilityContract.methods.rVol(pair.token0.address, pair.token1.address, 4, 24).call({ })
@@ -496,8 +519,8 @@ class Store {
     }
   }
 
-  _getQuotes = async (pair, volatilityContractAddress) => {
-    const keep3rVolatilityContract = new web3.eth.Contract(Keep3rV1VolatilityABI, volatilityContractAddress)
+  _getQuotes = async (_web3, pair, volatilityContractAddress) => {
+    const keep3rVolatilityContract = new _web3.eth.Contract(Keep3rV1VolatilityABI, volatilityContractAddress)
 
     try {
       const quote = await keep3rVolatilityContract.methods.quote(pair.token0.address, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 7).call({ })
@@ -515,7 +538,7 @@ class Store {
 
   _getUSDPrices = async () => {
     try {
-      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
+      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum,fantom&vs_currencies=usd'
       const priceString = await rp(url);
       const priceJSON = JSON.parse(priceString)
 

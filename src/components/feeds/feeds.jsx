@@ -132,17 +132,20 @@ class Feeds extends Component {
 
     const uniFeeds = store.getStore('uniFeeds')
     const sushiFeeds = store.getStore('sushiFeeds')
+    const ftmFeeds = store.getStore('ftmFeeds')
 
     this.state = {
       uniFeeds: uniFeeds,
       sushiFeeds: sushiFeeds,
-      feeds: [ ...uniFeeds, ...sushiFeeds],
+      ftmFeeds: ftmFeeds,
+      feeds: [ ...uniFeeds, ...sushiFeeds, ...ftmFeeds],
       feedFilter: null,
 
     }
 
     dispatcher.dispatch({ type: GET_FEEDS, content: { version: 'Uniswap' } })
     dispatcher.dispatch({ type: GET_FEEDS, content: { version: 'Sushiswap' } })
+    dispatcher.dispatch({ type: GET_FEEDS, content: { version: 'Fantom' } })
   };
 
   componentWillMount() {
@@ -158,11 +161,13 @@ class Feeds extends Component {
   feedsReturned = () => {
     const uniFeeds = store.getStore('uniFeeds')
     const sushiFeeds = store.getStore('sushiFeeds')
+    const ftmFeeds = store.getStore('ftmFeeds')
 
     this.setState({
       uniFeeds: uniFeeds,
       sushiFeeds: sushiFeeds,
-      feeds: [ ...uniFeeds, ...sushiFeeds]
+      ftmFeeds: ftmFeeds,
+      feeds: [ ...uniFeeds, ...sushiFeeds, ...ftmFeeds]
     })
   }
 
@@ -211,6 +216,10 @@ class Feeds extends Component {
             <img src={require('../../assets/tokens/SUSHI-logo.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon } />
             <Typography variant='h3'>Sushiswap</Typography>
           </ToggleButton>
+          <ToggleButton value="Fantom">
+            <img src={require('../../assets/tokens/FTM.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon } />
+            <Typography variant='h3'>Fantom</Typography>
+          </ToggleButton>
         </ToggleButtonGroup>
       </div>
     )
@@ -225,8 +234,6 @@ class Feeds extends Component {
     if(!feeds) {
       return <div></div>
     }
-
-    console.log(feedFilter)
 
     return feeds.filter((feed) => {
       if(!feedFilter) {
@@ -248,6 +255,7 @@ class Feeds extends Component {
           <div className={ classes.pair }>
             { feed.type === 'Uniswap' && <img src={require('../../assets/tokens/UNI-logo.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon }/> }
             { feed.type === 'Sushiswap' && <img src={require('../../assets/tokens/SUSHI-logo.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon }/> }
+            { feed.type === 'Fantom' && <img src={require('../../assets/tokens/FTM.png')} alt='' width={ 30 } height={ 30 } className={ classes.productIcon }/> }
             <Typography variant='h6'>{ feed.type }</Typography>
           </div>
         }
